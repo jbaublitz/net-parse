@@ -1,4 +1,4 @@
-use nom::be_u16;
+use nom::{rest,be_u16};
 
 use {ParseOps,ConvError};
 use packet_writer::{PacketWriter,WriteFields};
@@ -9,7 +9,11 @@ named!(bytes_to_ethernet<&[u8], EthHdr>, do_parse!(
     eth_type: be_u16 >>
     (EthHdr { mac_src: src, mac_dest: dest, eth_type })
 ));
-named!(strip_ethernet<&[u8]>, take!(14));
+named!(strip_ethernet<&[u8]>, do_parse!(
+    take!(14) >>
+    rest: rest >>
+    (rest)
+));
 
 pub struct EthHdr<'a> {
     mac_src: &'a [u8],
@@ -32,5 +36,16 @@ impl<'a> ParseOps<'a> for EthHdr<'a> {
 
     fn strip_header(buf: &[u8]) -> Result<&[u8], ConvError> {
         Ok(try!(strip_ethernet(buf).to_result()))
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_strip_header() {
+        let s = &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
+        assert_eq!(EthHdr::strip_header(s).unwrap(), &[15, 16, 17])
     }
 }
