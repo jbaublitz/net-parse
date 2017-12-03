@@ -15,6 +15,7 @@ named!(strip_ethernet<&[u8]>, do_parse!(
     (rest)
 ));
 
+#[derive(Debug,PartialEq)]
 pub struct EthHdr<'a> {
     mac_src: &'a [u8],
     mac_dest: &'a [u8],
@@ -42,6 +43,24 @@ impl<'a> ParseOps<'a> for EthHdr<'a> {
 #[cfg(test)]
 mod test {
     use super::*;
+    use byteorder::{ByteOrder,BigEndian};
+
+    #[test]
+    fn test_write_header() {
+        assert_eq!(EthHdr { mac_src: &[1, 2, 3, 4, 5, 6],
+                            mac_dest: &[7, 8, 9, 10, 11, 12],
+                            eth_type: BigEndian::read_u16(&[13, 14])
+        }.to_bytes().unwrap(), &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14])
+    }
+
+    #[test]
+    fn test_parse_header() {
+        let s = &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
+        assert_eq!(EthHdr { mac_src: &[1, 2, 3, 4, 5, 6],
+                            mac_dest: &[7, 8, 9, 10, 11, 12],
+                            eth_type: BigEndian::read_u16(&[13, 14]) },
+                   EthHdr::from_bytes(s).unwrap())
+    }
 
     #[test]
     fn test_strip_header() {
