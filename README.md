@@ -3,4 +3,4 @@
 # net-parse
 A library for parsing and stripping headers at all levels of the network stack
 
-Click [here](https://jbaublitz.github.io/net-parse/net-parse/index.html) for reference documentation.
+Click [here](https://jbaublitz.github.io/net-parse/net_parse/index.html) for reference documentation.
