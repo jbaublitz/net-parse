@@ -7,7 +7,7 @@ named!(bytes_to_ethernet<&[u8], EthHdr>, do_parse!(
     src: take!(6) >>
     dest: take!(6) >>
     eth_type: be_u16 >>
-    (EthHdr { mac_src: src, mac_dest: dest, eth_type })
+    (EthHdr { mac_src: src, mac_dest: dest, eth_type: EthType::from(eth_type) })
 ));
 named!(strip_ethernet<&[u8]>, do_parse!(
     take!(14) >>
@@ -15,11 +15,15 @@ named!(strip_ethernet<&[u8]>, do_parse!(
     (rest)
 ));
 
+c_enum!(EthType, u16, {
+    IPv4 => 0x0800
+});
+
 #[derive(Debug,PartialEq)]
 pub struct EthHdr<'a> {
     mac_src: &'a [u8],
     mac_dest: &'a [u8],
-    eth_type: u16,
+    eth_type: EthType,
 }
 
 impl<'a> ParseOps<'a> for EthHdr<'a> {
@@ -27,7 +31,9 @@ impl<'a> ParseOps<'a> for EthHdr<'a> {
         let mut pw = PacketWriter::new();
         try!(pw.write_bytes(self.mac_src));
         try!(pw.write_bytes(self.mac_dest));
-        try!(<PacketWriter as WriteFields<Vec<u8>>>::write_u16::<u16>(&mut pw, self.eth_type));
+        try!(<PacketWriter as WriteFields<Vec<u8>>>::write_u16::<u16>(
+            &mut pw, self.eth_type as u16
+        ));
         Ok(pw.get_result())
     }
 
@@ -43,22 +49,21 @@ impl<'a> ParseOps<'a> for EthHdr<'a> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use byteorder::{ByteOrder,BigEndian};
 
     #[test]
     fn test_write_header() {
         assert_eq!(EthHdr { mac_src: &[1, 2, 3, 4, 5, 6],
                             mac_dest: &[7, 8, 9, 10, 11, 12],
-                            eth_type: BigEndian::read_u16(&[13, 14])
-        }.to_bytes().unwrap(), &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14])
+                            eth_type: EthType::IPv4,
+        }.to_bytes().unwrap(), &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0x08, 0x00])
     }
 
     #[test]
     fn test_parse_header() {
-        let s = &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
+        let s = &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0x08, 0x00, 15, 16, 17];
         assert_eq!(EthHdr { mac_src: &[1, 2, 3, 4, 5, 6],
                             mac_dest: &[7, 8, 9, 10, 11, 12],
-                            eth_type: BigEndian::read_u16(&[13, 14]) },
+                            eth_type: EthType::IPv4 },
                    EthHdr::from_bytes(s).unwrap())
     }
 

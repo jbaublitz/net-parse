@@ -8,6 +8,8 @@ use std::io;
 
 
 mod packet_writer;
+#[macro_use]
+mod macros;
 pub mod l2;
 pub mod l3;
 pub mod l4;
