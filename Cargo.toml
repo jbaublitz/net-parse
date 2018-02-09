@@ -4,5 +4,5 @@ version = "0.1.0"
 authors = ["John Baublitz <john.m.baublitz@gmail.com>"]
 
 [dependencies]
-nom = "*"
-byteorder = "*"
+nom = "4.0.0-alpha"
+byteorder = "1"

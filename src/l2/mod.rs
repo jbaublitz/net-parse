@@ -11,8 +11,8 @@ named!(bytes_to_ethernet<&[u8], EthHdr>, do_parse!(
 ));
 named!(strip_ethernet<&[u8]>, do_parse!(
     take!(14) >>
-    rest: rest >>
-    (rest)
+    inner_bytes: rest >>
+    (inner_bytes)
 ));
 
 c_enum!(EthType, u16, {
@@ -29,20 +29,34 @@ pub struct EthHdr<'a> {
 impl<'a> ParseOps<'a> for EthHdr<'a> {
     fn to_bytes(self) -> Result<Vec<u8>, ConvError> {
         let mut pw = PacketWriter::new();
-        try!(pw.write_bytes(self.mac_src));
-        try!(pw.write_bytes(self.mac_dest));
-        try!(<PacketWriter as WriteFields<Vec<u8>>>::write_u16::<u16>(
+        pw.write_bytes(self.mac_src)?;
+        pw.write_bytes(self.mac_dest)?;
+        <PacketWriter as WriteFields<Vec<u8>>>::write_u16::<u16>(
             &mut pw, self.eth_type as u16
-        ));
+        )?;
         Ok(pw.get_result())
     }
 
     fn from_bytes(buf: &'a [u8]) -> Result<Self, ConvError> {
-        Ok(try!(bytes_to_ethernet(buf).to_result()))
+        match bytes_to_ethernet(buf) {
+            Ok((_, ip)) => Ok(ip),
+            Err(e) => {
+                Err(ConvError(
+                    format!("Failed to parse - here is the remaining output: {:?}", e)
+                ))
+            },
+        }
     }
 
     fn strip_header(buf: &[u8]) -> Result<&[u8], ConvError> {
-        Ok(try!(strip_ethernet(buf).to_result()))
+        match strip_ethernet(buf) {
+            Ok((_, eth)) => Ok(eth),
+            Err(e) => {
+                Err(ConvError(
+                    format!("Failed to parse - here is the remaining output: {:?}", e)
+                ))
+            },
+        }
     }
 }
 

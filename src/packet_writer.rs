@@ -6,19 +6,19 @@ use ConvError;
 
 pub trait WriteFields<T>: WriteBytesExt {
     fn write_u8<I>(&mut self, v: I) -> Result<(), ConvError> where I: Into<u8> {
-        Ok(try!(WriteBytesExt::write_u8(self, v.into())))
+        Ok(WriteBytesExt::write_u8(self, v.into())?)
     }
 
     fn write_u16<I>(&mut self, v: I) -> Result<(), ConvError> where I: Into<u16> {
-        Ok(try!(WriteBytesExt::write_u16::<BigEndian>(self, v.into())))
+        Ok(WriteBytesExt::write_u16::<BigEndian>(self, v.into())?)
     }
 
     fn write_u32<I>(&mut self, v: I) -> Result<(), ConvError> where I: Into<u32> {
-        Ok(try!(WriteBytesExt::write_u32::<BigEndian>(self, v.into())))
+        Ok(WriteBytesExt::write_u32::<BigEndian>(self, v.into())?)
     }
 
     fn write_bytes<'a, I>(&mut self, v: I) -> Result<(), ConvError> where I: Into<&'a [u8]> {
-        let _ = try!(self.write(v.into()));
+        let _ = self.write(v.into())?;
         Ok(())
     }
 
