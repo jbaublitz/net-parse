@@ -2,6 +2,16 @@
 name = "net-parse"
 version = "0.1.0"
 authors = ["John Baublitz <john.m.baublitz@gmail.com>"]
+description = "Library for parsing and serializing multiple layers of the network stack"
+license = "BSD-3-Clause"
+repository = "https://github.com/jbaublitz/net-parse"
+keywords = ["network", "parse", "l2", "l3", "l4"]
+include = [
+    "**/*.rs",
+    "**/*.c",
+    "Cargo.toml",
+    "LICENSE",
+]
 
 [dependencies]
 nom = "4.0.0-alpha"
